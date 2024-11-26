@@ -810,18 +810,18 @@ void Blaster_Fire (edict_t *ent, vec3_t g_offset, int damage, qboolean hyper, in
 	VectorScale (forward, -2, ent->client->kick_origin);
 	ent->client->kick_angles[0] = -1;
 
-	fire_rocket(ent, start, forward, damage, 1000, 1000, 10, 10000);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
 
 	VectorNormalize(right);
 	VectorScale(right, 2, right);
 	VectorAdd(start, right, start);
-	fire_rocket(ent, start, forward, damage, 1000, 1000, 10, 10000);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
 
 	VectorNormalize(right);
 	VectorScale(right, -4, right);
 	VectorAdd(start, right, start);
-	fire_rocket(ent, start, forward, damage, 1000, 1000, 10, 10000);
-
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10); //removed extra 10000 argument
+	//rando change
 	//fire_blaster(ent, start, forward, damage, 1000, effect, hyper); old blaster fire call
 
 	// send muzzle flash

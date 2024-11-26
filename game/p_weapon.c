@@ -813,7 +813,7 @@ BLASTER / HYPERBLASTER
 ======================================================================
 */
 
-void Blaster_Fire (edict_t *ent, vec3_t g_offset, int damage, qboolean hyper, int effect)
+void Blaster_Fire(edict_t* ent, vec3_t g_offset, int damage, qboolean hyper, int effect)
 {
 	vec3_t	forward, right;
 	vec3_t	start;
@@ -821,28 +821,51 @@ void Blaster_Fire (edict_t *ent, vec3_t g_offset, int damage, qboolean hyper, in
 
 	if (is_quad)
 		damage *= 4;
-	AngleVectors (ent->client->v_angle, forward, right, NULL);
-	VectorSet(offset, 24, 8, ent->viewheight-8);
-	VectorAdd (offset, g_offset, offset);
-	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 24, 8, ent->viewheight - 8);
+	VectorAdd(offset, g_offset, offset);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
-	VectorScale (forward, -2, ent->client->kick_origin);
+	VectorScale(forward, -2, ent->client->kick_origin);
 	ent->client->kick_angles[0] = -1;
 
-	fire_blaster (ent, start, forward, damage, 1000, effect, hyper);
+	//center bullet
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10); 
+	fire_rail(ent, start, forward, damage, 1); 
+	fire_bfg(ent, start, forward, damage, 400, 100);
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100); 
+
+	//right bullet
+	VectorNormalize(right);
+	VectorScale(right, 8, right);
+	VectorAdd(start, right, start);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
+	fire_rail(ent, start, forward, damage, 1); 
+	fire_bfg(ent, start, forward, damage, 400, 100); 
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+
+	//left bullet
+	VectorNormalize(right); 
+	VectorScale(right, -14, right);
+	VectorAdd(start, right, start);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10); //removed extra 10000 argument
+	fire_rail(ent, start, forward, damage, 1);
+	fire_bfg(ent, start, forward, damage, 400, 100); 
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+
+	//fire_blaster(ent, start, forward, damage, 1000, effect, hyper); old blaster fire call
 
 	// send muzzle flash
-	gi.WriteByte (svc_muzzleflash);
-	gi.WriteShort (ent-g_edicts);
+	gi.WriteByte(svc_muzzleflash);
+	gi.WriteShort(ent - g_edicts);
 	if (hyper)
-		gi.WriteByte (MZ_HYPERBLASTER | is_silenced);
+		gi.WriteByte(MZ_HYPERBLASTER | is_silenced);
 	else
-		gi.WriteByte (MZ_BLASTER | is_silenced);
-	gi.multicast (ent->s.origin, MULTICAST_PVS);
+		gi.WriteByte(MZ_BLASTER | is_silenced);
+	gi.multicast(ent->s.origin, MULTICAST_PVS);
 
 	PlayerNoise(ent, start, PNOISE_WEAPON);
 }
-
 
 void Weapon_Blaster_Fire (edict_t *ent)
 {
@@ -1013,6 +1036,30 @@ void Machinegun_Fire (edict_t *ent)
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
 	fire_bullet (ent, start, forward, damage, kick, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_MACHINEGUN);
 
+	//center bullet
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
+	fire_rail(ent, start, forward, damage, 1);
+	fire_bfg(ent, start, forward, damage, 400, 100);
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+
+	//right bullet
+	VectorNormalize(right);
+	VectorScale(right, 16, right);
+	VectorAdd(start, right, start);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
+	fire_rail(ent, start, forward, damage, 1);
+	fire_bfg(ent, start, forward, damage, 400, 100);
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+
+	//left bullet
+	VectorNormalize(right);
+	VectorScale(right, -22, right);
+	VectorAdd(start, right, start);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10); //removed extra 10000 argument
+	fire_rail(ent, start, forward, damage, 1);
+	fire_bfg(ent, start, forward, damage, 400, 100);
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+
 	gi.WriteByte (svc_muzzleflash);
 	gi.WriteShort (ent-g_edicts);
 	gi.WriteByte (MZ_MACHINEGUN | is_silenced);
@@ -1150,6 +1197,30 @@ void Chaingun_Fire (edict_t *ent)
 
 		fire_bullet (ent, start, forward, damage, kick, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_CHAINGUN);
 	}
+
+	//center bullet
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
+	fire_rail(ent, start, forward, damage, 1);
+	fire_bfg(ent, start, forward, damage, 400, 100);
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+
+	//right bullet
+	VectorNormalize(right);
+	VectorScale(right, 16, right);
+	VectorAdd(start, right, start);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
+	fire_rail(ent, start, forward, damage, 1);
+	fire_bfg(ent, start, forward, damage, 400, 100);
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+
+	//left bullet
+	VectorNormalize(right);
+	VectorScale(right, -22, right);
+	VectorAdd(start, right, start);
+	fire_rocket(ent, start, forward, damage, 1000, 1000, 10); //removed extra 10000 argument
+	fire_rail(ent, start, forward, damage, 1);
+	fire_bfg(ent, start, forward, damage, 400, 100);
+	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
 
 	// send muzzle flash
 	gi.WriteByte (svc_muzzleflash);

@@ -1565,8 +1565,13 @@ ClientThink
 
 This will be called once for each client frame, which will
 usually be a couple times for each server frame.
+
+Potentially could be used for status effect update
+SLOW EFFECTS DOWN! THIS COULD BE CALLED THOUSANDS OF TIMES BETWEEN VISUAL CHANGES!
 ==============
 */
+
+//T_Damage(ent,ent,ent,no,ent->s.origin,no,1,0,0,0); damage tick over time
 void ClientThink (edict_t *ent, usercmd_t *ucmd)
 {
 	gclient_t	*client;

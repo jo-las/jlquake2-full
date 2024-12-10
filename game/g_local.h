@@ -1109,5 +1109,28 @@ struct edict_s
 	// common data blocks
 	moveinfo_t		moveinfo;
 	monsterinfo_t	monsterinfo;
+
+	///JLnew crops
+	crop_t* crop;
 };
+
+#define CROPTYPE_WHEAT 1
+typedef struct crop_s //JL
+{
+	int type;
+	int growth_stage;
+	int grow_time;
+	int finalModelIndex;
+} crop_t;
+
+#define WHEAT_MODEL "models/props/wheat/tris.md2"
+
+// Array of crop types
+crop_t crops[] = {
+	{"wheat", WHEAT_MODEL, 3, -1}  // Assuming 3 growth stages; final model index to be set later
+};
+
+void SP_trigger_field(edict_t* self);
+void CropThink(edict_t* self);
+
 

@@ -990,3 +990,24 @@ void ClientCommand (edict_t *ent)
 	else	// anything that doesn't match a command will be a chat
 		Cmd_Say_f (ent, false, true);
 }
+
+void Cmd_PlantCrop_f(edict_t* ent) {
+	edict_t* field = FindFieldUnderPlayer(ent);
+	if (!field) {
+		gi.cprintf(ent, PRINT_HIGH, "You are not on a field!\n");
+		return;
+	}
+	SpawnCrop(field, CROPTYPE_WHEAT);
+	gi.cprintf(ent, PRINT_HIGH, "Planted a crop!\n");
+}
+
+void Cmd_HarvestCrop_f(edict_t* ent) {
+	edict_t* crop = FindCropUnderPlayer(ent);
+	if (crop && crop->crop->growth_stage >= 2) {
+		gi.cprintf(ent, PRINT_HIGH, "You harvested the crop!\n");
+		G_FreeEdict(crop);
+	}
+	else {
+		gi.cprintf(ent, PRINT_HIGH, "No ripe crops to harvest here.\n");
+	}
+}

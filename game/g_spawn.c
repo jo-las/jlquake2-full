@@ -265,6 +265,8 @@ spawn_t	spawns[] = {
 	{"turret_base", SP_turret_base},
 	{"turret_driver", SP_turret_driver},
 
+	{ "trigger_field", SP_trigger_field},
+
 	{NULL, NULL}
 };
 
@@ -980,5 +982,35 @@ void SP_worldspawn (edict_t *ent)
 
 	// 63 testing
 	gi.configstring(CS_LIGHTS+63, "a");
+}
+
+//JL
+void SpawnCrop(edict_t* field, int type) {
+	edict_t* crop = G_Spawn();
+	crop->crop = gi.TagMalloc(sizeof(crop_t), TAG_GAME);
+	crop->crop->type = type;
+	crop->crop->growth_stage = 0;
+	crop->crop->grow_time = level.time + 10.0f; // 10 seconds per stage
+
+	// Use existing game models
+	crop->s.modelindex = gi.modelindex("models/items/adrenaline/tris.md2"); // Seed stage
+	crop->movetype = MOVETYPE_NONE;
+	crop->solid = SOLID_BBOX;
+
+	// Position crop at the field's location
+	VectorCopy(field->s.origin, crop->s.origin);
+	VectorAdd(crop->s.origin, vec3_origin, crop->s.origin);
+	gi.linkentity(crop);
+
+	crop->think = CropThink;
+	crop->nextthink = level.time + 0.1f;
+}
+
+void SpawnFieldNearPlayer(edict_t* player) {
+	edict_t* field = G_Spawn();
+	field->classname = "trigger_field";
+	VectorCopy(player->s.origin, field->s.origin);
+	field->s.origin[0] += 50; // Offset slightly from the player
+	SP_trigger_field(field);
 }
 

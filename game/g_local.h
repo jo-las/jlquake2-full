@@ -1111,3 +1111,9 @@ struct edict_s
 	monsterinfo_t	monsterinfo;
 };
 
+//this writes to a file the message
+//param msg this is the input to be written into the file
+// return
+// note this is file ops, use cautiously
+void file_log(const char* msg);
+

@@ -1874,3 +1874,13 @@ void SP_misc_teleporter_dest (edict_t *ent)
 	gi.linkentity (ent);
 }
 
+//simple example method of writing to a file, exemplifies standard C functions in Quake 2
+void file_log(const char* msg)
+{
+	FILE* file; //pointer 
+	if (!msg)return; //make sure pointer exists
+	file = fopen("quake2.log", "a"); //opens file in "append" mode using quake 2 directory
+	if (!file)return; //make sure the file actually is created/exists
+	fprintf(file, "%s%i:%s\n", __FILE__, __LINE__, msg); //start writing, expands to the file and the line number
+	fclose(file); //close the file when done
+}

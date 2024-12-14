@@ -302,20 +302,20 @@ Draw help computer.
 void HelpComputer (edict_t *ent)
 {
 	char	string[1024];
-	char	*sk;
+	char	*sk; //pointer to a string
 
 	if (skill->value == 0)
-		sk = "easy";
+		sk = "poggers";
 	else if (skill->value == 1)
-		sk = "medium";
+		sk = "be";
 	else if (skill->value == 2)
-		sk = "hard";
+		sk = "thy";
 	else
-		sk = "hard+";
+		sk = "name";
 
 	// send the layout
 	Com_sprintf (string, sizeof(string),
-		"xv 32 yv 8 picn help "			// background
+		"xv 32 yv 8 picn help "			// background   file is called 'help'
 		"xv 202 yv 12 string2 \"%s\" "		// skill
 		"xv 0 yv 24 cstring2 \"%s\" "		// level name
 		"xv 0 yv 54 cstring2 \"%s\" "		// help 1

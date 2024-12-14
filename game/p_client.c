@@ -1746,6 +1746,12 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		if (other->inuse && other->client->chase_target == ent)
 			UpdateChaseCam(other);
 	}
+
+	//adding a weathertimer
+	if (level.time > level.time + 1000) {
+
+	}
+		
 }
 
 

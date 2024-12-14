@@ -410,6 +410,7 @@ void G_RunFrame (void)
 }
 
 void CropThink(edict_t* crop) { //JL
+	gi.dprintf("Crop growth stage: %d\n", crop->count);
 	if (level.time >= crop->crop->grow_time) {
 		crop->crop->growth_stage++;
 		crop->crop->grow_time = level.time + 10.0f; // 10 seconds to next stage

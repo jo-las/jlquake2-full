@@ -1002,6 +1002,8 @@ void SpawnCrop(edict_t* field, int type) {
 	VectorAdd(crop->s.origin, vec3_origin, crop->s.origin);
 	gi.linkentity(crop);
 
+	gi.dprintf("Spawning crop type %d at field.\n", type);
+
 	crop->think = CropThink;
 	crop->nextthink = level.time + 0.1f;
 }

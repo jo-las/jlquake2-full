@@ -265,7 +265,7 @@ spawn_t	spawns[] = {
 	{"turret_base", SP_turret_base},
 	{"turret_driver", SP_turret_driver},
 
-	{ "trigger_field", SP_trigger_field},
+	//"trigger_field", SP_trigger_field}, JL
 
 	{NULL, NULL}
 };
@@ -987,10 +987,10 @@ void SP_worldspawn (edict_t *ent)
 //JL
 void SpawnCrop(edict_t* field, int type) {
 	edict_t* crop = G_Spawn();
-	crop->crop = gi.TagMalloc(sizeof(crop_t), TAG_GAME);
-	crop->crop->type = type;
-	crop->crop->growth_stage = 0;
-	crop->crop->grow_time = level.time + 10.0f; // 10 seconds per stage
+	crop->plantedcrop = gi.TagMalloc(sizeof(crop_t), TAG_GAME);
+	crop->plantedcrop->type = type;
+	crop->plantedcrop->growth_stage = 0;
+	crop->plantedcrop->grow_time = level.time + 10.0f; // 10 seconds per stage
 
 	// Use existing game models
 	crop->s.modelindex = gi.modelindex("models/items/adrenaline/tris.md2"); // Seed stage

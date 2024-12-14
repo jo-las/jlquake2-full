@@ -410,12 +410,12 @@ void G_RunFrame (void)
 }
 
 void CropThink(edict_t* crop) { //JL
-	if (level.time >= crop->crop->grow_time) {
-		crop->crop->growth_stage++;
-		crop->crop->grow_time = level.time + 10.0f; // 10 seconds to next stage
+	if (level.time >= crop->plantedcrop->grow_time) {
+		crop->plantedcrop->growth_stage++;
+		crop->plantedcrop->grow_time = level.time + 10.0f; // 10 seconds to next stage
 
 		// Update model for each growth stage
-		switch (crop->crop->growth_stage) {
+		switch (crop->plantedcrop->growth_stage) {
 		case 1:
 			crop->s.modelindex = gi.modelindex("models/items/armor/body/tris.md2"); // Sprout stage
 			break;
@@ -429,4 +429,13 @@ void CropThink(edict_t* crop) { //JL
 	}
 	crop->nextthink = level.time + 0.1f;
 }
+
+void FindFieldUnderPlayer(edict_t* crop) {
+
+}
+
+void FindCropUnderPlayer(edict_t* crop) {
+
+}
+
 

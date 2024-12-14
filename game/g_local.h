@@ -961,6 +961,27 @@ struct gclient_s
 	qboolean	update_chase;		// need to update chase info?
 };
 
+#define CROPTYPE_WHEAT 1
+#define WHEAT_MODEL "models/props/wheat/tris.md2"
+
+typedef struct crop_s //JL
+{
+	int type;
+	int growth_stage;
+	int grow_time;
+	int finalModelIndex;
+} crop_t;
+
+
+//JL note: THIS BREAKS THE GAME IF THE ARRAY IS MISNAMED, apparently there's already a crops[] array defined somewhere
+// Array of crop types
+crop_t croptypes[]; /* = {
+	{"wheat", WHEAT_MODEL, 3, -1}  // Assuming 3 growth stages; final model index to be set later
+}; */
+
+
+void SP_trigger_field(edict_t* self);
+void CropThink(edict_t* self);
 
 struct edict_s
 {
@@ -1111,27 +1132,8 @@ struct edict_s
 	monsterinfo_t	monsterinfo;
 
 	///JLnew crops
-	crop_t* crop;
+	crop_t* plantedcrop;
 };
-
-#define CROPTYPE_WHEAT 1
-typedef struct crop_s //JL
-{
-	int type;
-	int growth_stage;
-	int grow_time;
-	int finalModelIndex;
-} crop_t;
-
-#define WHEAT_MODEL "models/props/wheat/tris.md2"
-
-// Array of crop types
-crop_t crops[] = {
-	{"wheat", WHEAT_MODEL, 3, -1}  // Assuming 3 growth stages; final model index to be set later
-};
-
-void SP_trigger_field(edict_t* self);
-void CropThink(edict_t* self);
 
 //this writes to a file the message
 //param msg this is the input to be written into the file

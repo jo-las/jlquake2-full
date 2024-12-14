@@ -1003,7 +1003,7 @@ void Cmd_PlantCrop_f(edict_t* ent) {
 
 void Cmd_HarvestCrop_f(edict_t* ent) {
 	edict_t* crop = FindCropUnderPlayer(ent);
-	if (crop && crop->crop->growth_stage >= 2) {
+	if (crop && crop->plantedcrop->growth_stage >= 2) {
 		gi.cprintf(ent, PRINT_HIGH, "You harvested the crop!\n");
 		G_FreeEdict(crop);
 	}
@@ -1011,3 +1011,4 @@ void Cmd_HarvestCrop_f(edict_t* ent) {
 		gi.cprintf(ent, PRINT_HIGH, "No ripe crops to harvest here.\n");
 	}
 }
+

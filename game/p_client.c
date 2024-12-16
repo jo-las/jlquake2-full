@@ -628,6 +628,7 @@ void InitClientPersistant (gclient_t *client)
 	}
 
 	// Debug check
+	gi.dprintf("Welcome to the farming mod!\n");
 	gi.dprintf("Player initialized with Currency: %d, Seed Stock: %d\n", client->currency, client->seed_stock);
 
 	client->pers.max_bullets	= 200;

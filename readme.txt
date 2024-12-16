@@ -1,29 +1,28 @@
+Farming Mod for IT266-FA24 Final
+INSTALLATION:
+Drag the 266mod folder into your Quake II (C:/Program Files (x86)/Steam/steamapps/common/Quake 2)
+Run the mod in game by opening up the console with "~" and typing "set game 266mod"
+OR creating a shortcut to quake2.exe and adding "+set game 266mod" to the shortcut's properties
+Load up a world and enjoy.
 
-This is the complete source code for Quake 2, version 3.19, buildable with
-visual C++ 6.0.  The linux version should be buildable, but we haven't
-tested it for the release.
+INSTRUCTIONS:
+- Use the 'spawnfield' command to spawn a field
+- Touch the 'field' and use 'plantcrop <crop>' to plant a crop
+- Wait for the plant to grow, watch the top left for notifications
+- Once plant is fully grown, touch the field and use 'harvestcrop'
+- Planting crops requires seeds, and harvesting crops gives you money
+- Interact with the Shop NPC to buy new tools or seeds with money
+	- Done via commands
+	- Spawned with 'spawnshopkeep'
+	- Start interaction with 'interact_shopkeeper'
+	- Make selection with 'shopkeeper_choice <1-3>' 
+- Defend your crops against incoming pests! Shoot them before they reach your crops
+- Watch out for weather! Different weather may mess with crop maintenance 
+- To view your resources, type 'displayresources' in the console
 
-The code is all licensed under the terms of the GPL (gnu public license).  
-You should read the entire license, but the gist of it is that you can do 
-anything you want with the code, including sell your new version.  The catch 
-is that if you distribute new binary versions, you are required to make the 
-entire source code available for free to everyone.
-
-The primary intent of this release is for entertainment and educational 
-purposes, but the GPL does allow commercial exploitation if you obey the 
-full license.  If you want to do something commercial and you just can't bear 
-to have your source changes released, we could still negotiate a separate 
-license agreement (for $$$), but I would encourage you to just live with the 
-GPL.
-
-All of the Q2 data files remain copyrighted and licensed under the 
-original terms, so you cannot redistribute data from the original game, but if 
-you do a true total conversion, you can create a standalone game based on 
-this code.
-
-Thanks to Robert Duffy for doing the grunt work of building this release.
-
-John Carmack
-Id Software
-
-
+PERSONAL DELIVERABLES:
+- 10 Different Types of Crops to Grow
+- Market to buy seeds and sell produce (a farmer's market) 
+- Pest control function 
+- 5 Activities to maintain said crops (Outside of planting them)
+- 5 Weather conditions that can affect grow rate 

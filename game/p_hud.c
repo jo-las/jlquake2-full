@@ -251,16 +251,21 @@ void DeathmatchScoreboardMessage (edict_t *ent, edict_t *killer)
 
 	// Custom help text
 	Com_sprintf(string, sizeof(string),
-		"xv 32 yv 32 cstring2 \"HOW TO PLAY:\" "
-		"xv 32 yv 48 cstring2 \"- Use the 'spawnfield' command to spawn a field\" "
-		"xv 32 yv 64 cstring2 \"- Walk up to the field and touch it to plant a crop\" "
-		"xv 32 yv 80 cstring2 \"- Wait for the plant to grow, then use 'harvestfield'\" "
-		"xv 32 yv 96 cstring2 \"- Planting crops requires seeds; harvesting gives money\" "
-		"xv 32 yv 112 cstring2 \"- Interact with the Shop NPC to buy tools or seeds\" "
-		"xv 32 yv 128 cstring2 \"- Shoot pests that are attacking your crops!\" "
-		"xv 32 yv 144 cstring2 \"- Weather affects crop growth, keep an eye out!\" "
-		"xv 50 yv 172 string2 \"Press F1 to toggle this menu.\" ");
-
+		"xv 24 yv 32 cstring2 \"INSTRUCTIONS:\" "    // Title
+		"xv 24 yv 48 cstring2 \"- Use 'spawnfield' to spawn a field\" "
+		"xv 24 yv 64 cstring2 \"- Touch the 'field' and use 'plantcrop <crop>'\" "
+		"xv 24 yv 80 cstring2 \"- Wait for the plant to grow, watch for notifications\" "
+		"xv 24 yv 96 cstring2 \"- Once grown, touch the field and use 'harvestcrop'\" "
+		"xv 24 yv 112 cstring2 \"- Planting crops requires seeds, harvesting gives money\" "
+		"xv 24 yv 128 cstring2 \"- Interact with the Shop NPC to buy tools or seeds\" "
+		"xv 24 yv 144 cstring2 \"  - Done via commands\" "
+		"xv 24 yv 160 cstring2 \"  - Spawned with 'spawnshopkeep'\" "
+		"xv 24 yv 176 cstring2 \"  - Start with 'interact_shopkeeper'\" "
+		"xv 24 yv 192 cstring2 \"  - Select with 'shopkeeper_choice <1-3>'\" "
+		"xv 24 yv 208 cstring2 \"- Defend crops from pests! Shoot them before they reach crops\" "
+		"xv 24 yv 224 cstring2 \"- Watch out for weather! It may affect crop maintenance\" "
+		"xv 24 yv 240 cstring2 \"- To view resources, type 'displayresources' in the console\" "
+		"xv 42 yv 268 string2 \"Press F1 to toggle this menu.\" ");
 	gi.WriteByte (svc_layout);
 	gi.WriteString (string);
 }
@@ -322,60 +327,27 @@ void HelpComputer(edict_t* ent)
 
 	// Custom help screen content
 	Com_sprintf(string, sizeof(string),
-		"xv 32 yv 8 picn help "                     // Background image (help)
-		"xv 32 yv 32 cstring2 \"HOW TO PLAY:\" "    // Title
-		"xv 32 yv 48 cstring2 \"- Use the 'spawnfield' command to spawn a field\" "
-		"xv 32 yv 64 cstring2 \"- Walk up to the field and touch it to plant a crop\" "
-		"xv 32 yv 80 cstring2 \"- Wait for the plant to grow, then use 'harvestfield'\" "
-		"xv 32 yv 96 cstring2 \"- Planting crops requires seeds; harvesting gives money\" "
-		"xv 32 yv 112 cstring2 \"- Interact with the Shop NPC to buy tools or seeds\" "
-		"xv 32 yv 128 cstring2 \"- Defend crops from pests! Shoot them before they reach crops\" "
-		"xv 32 yv 144 cstring2 \"- Weather affects crops; be prepared for challenges!\" "
-		"xv 50 yv 172 string2 \"Press F1 to toggle this menu.\" "
+		"xv 24 yv 32 cstring2 \"INSTRUCTIONS:\" "    // Title
+		"xv 24 yv 48 cstring2 \"- Use 'spawnfield' to spawn a field\" "
+		"xv 24 yv 64 cstring2 \"- Touch the 'field' and use 'plantcrop <crop>'\" "
+		"xv 24 yv 80 cstring2 \"- Wait for the plant to grow, watch for notifications\" "
+		"xv 24 yv 96 cstring2 \"- Once grown, touch the field and use 'harvestcrop'\" "
+		"xv 24 yv 112 cstring2 \"- Planting crops requires seeds, harvesting gives money\" "
+		"xv 24 yv 128 cstring2 \"- Interact with the Shop NPC to buy tools or seeds\" "
+		"xv 24 yv 144 cstring2 \"  - Done via commands\" "
+		"xv 24 yv 160 cstring2 \"  - Spawned with 'spawnshopkeep'\" "
+		"xv 24 yv 176 cstring2 \"  - Start with 'interact_shopkeeper'\" "
+		"xv 24 yv 192 cstring2 \"  - Select with 'shopkeeper_choice <1-3>'\" "
+		"xv 24 yv 208 cstring2 \"- Defend crops from pests! Shoot them before they reach crops\" "
+		"xv 24 yv 224 cstring2 \"- Watch out for weather! It may affect crop maintenance\" "
+		"xv 24 yv 240 cstring2 \"- To view resources, type 'displayresources' in the console\" "
+		"xv 42 yv 268 string2 \"Press F1 to toggle this menu.\" "
 	);
 
 	gi.WriteByte(svc_layout);
 	gi.WriteString(string);
 	gi.unicast(ent, true);
 }
-
-/* old help screen
-void HelpComputer (edict_t *ent)
-{
-	char	string[1024];
-	char	*sk; //pointer to a string
-
-	if (skill->value == 0)
-		sk = "poggers";
-	else if (skill->value == 1)
-		sk = "be";
-	else if (skill->value == 2)
-		sk = "thy";
-	else
-		sk = "name";
-
-	// send the layout
-	Com_sprintf (string, sizeof(string),
-		"xv 32 yv 8 picn help "			// background   file is called 'help'
-		"xv 202 yv 12 string2 \"%s\" "		// skill
-		"xv 0 yv 24 cstring2 \"%s\" "		// level name
-		"xv 0 yv 54 cstring2 \"%s\" "		// help 1
-		"xv 0 yv 110 cstring2 \"%s\" "		// help 2
-		"xv 50 yv 164 string2 \" kills     goals    secrets\" "
-		"xv 50 yv 172 string2 \"%3i/%3i     %i/%i       %i/%i\" ", 
-		sk,
-		level.level_name,
-		game.helpmessage1,
-		game.helpmessage2,
-		level.killed_monsters, level.total_monsters, 
-		level.found_goals, level.total_goals,
-		level.found_secrets, level.total_secrets);
-
-	gi.WriteByte (svc_layout);
-	gi.WriteString (string);
-	gi.unicast (ent, true);
-}
-*/
 
 /*
 ==================

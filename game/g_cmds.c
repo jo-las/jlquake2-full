@@ -939,6 +939,98 @@ void ClientCommand (edict_t *ent)
 		Cmd_Help_f (ent);
 		return;
 	}
+	// Handle "plantcrop" command; made to handle multiple kinds of crops
+	if (Q_stricmp(cmd, "plantcrop") == 0)
+	{
+		if (gi.argc() < 2) {
+			gi.cprintf(ent, PRINT_HIGH, "Usage: plantcrop <crop_type>\n");
+			return;
+		}
+		char* crop_type_str = gi.argv(1); //parsing the command
+		int crop_type;
+		// Convert crop type string to integer
+		if (Q_stricmp(crop_type_str, "wheat") == 0) {
+			crop_type = CROPTYPE_WHEAT;
+		}
+		else if (Q_stricmp(crop_type_str, "corn") == 0) {
+			crop_type = CROPTYPE_CORN;
+		}
+		else if (Q_stricmp(crop_type_str, "tomato") == 0) {
+			crop_type = CROPTYPE_TOMATO;
+		}
+		else if (Q_stricmp(crop_type_str, "potato") == 0) {
+			crop_type = CROPTYPE_POTATO;
+		}
+		else if (Q_stricmp(crop_type_str, "carrot") == 0) {
+			crop_type = CROPTYPE_CARROT;
+		}
+		else if (Q_stricmp(crop_type_str, "bean") == 0) {
+			crop_type = CROPTYPE_BEAN;
+		}
+		else if (Q_stricmp(crop_type_str, "pepper") == 0) {
+			crop_type = CROPTYPE_PEPPER;
+		}
+		else if (Q_stricmp(crop_type_str, "cabbage") == 0) {
+			crop_type = CROPTYPE_CABBAGE;
+		}
+		else if (Q_stricmp(crop_type_str, "onion") == 0) {
+			crop_type = CROPTYPE_ONION;
+		}
+		else if (Q_stricmp(crop_type_str, "garlic") == 0) {
+			crop_type = CROPTYPE_GARLIC;
+		}
+		else {
+			gi.cprintf(ent, PRINT_HIGH, "Invalid crop type! Valid types are: wheat, corn, tomato, potato, carrot, bean, pepper, cabbage, onion, garlic.\n");
+			return;
+		}
+		Cmd_PlantCrop_f(ent, crop_type);  // Call function for planting crops
+		return;
+	}
+	// Handle "harvestcrop" command
+	if (Q_stricmp(cmd, "harvestcrop") == 0)
+	{
+		Cmd_HarvestCrop_f(ent);  // Call function for harvesting crops
+		return;
+	}
+	//Handle "spawnfield" command
+	if (Q_stricmp(cmd, "spawnfield") == 0)
+	{
+		Cmd_SpawnField_f(ent);  // Call function for spawning field
+		return;
+	}
+	//Handle "displayresources" command
+	if (Q_stricmp(cmd, "displayresources") == 0)
+	{
+		Cmd_DisplayResources_f(ent);  // Call function to display resources
+		return;
+	}
+	//Handle "addseeds" command
+	if (Q_stricmp(cmd, "addseeds") == 0)
+	{
+		Cmd_AddSeeds_f(ent);  // Call function for adding seeds
+		return;
+	}
+	//Handle spawnflyer command
+	if (Q_stricmp(cmd, "spawnpest") == 0)
+	{
+		Cmd_SpawnFlyer_f(ent);  // Call function for spawning pests
+		return;
+	}
+
+	//Handle shopkeeper interaction
+	if (Q_stricmp(cmd, "spawnshopkeep") == 0) {
+		Cmd_SpawnShopkeeper_f(ent);
+		return;
+	}
+	if (Q_stricmp(cmd, "interact_shopkeeper") == 0) {
+		Cmd_InteractShopkeeper_f(ent);
+		return;
+	}
+	if (Q_stricmp(cmd, "shopkeeper_choice") == 0) {
+		int choice = atoi(gi.argv(1));
+		Cmd_HandleShopkeeperInput_f(ent, choice);
+		return;
+	}
 
 	if (level.intermissiontime)
 		return;
@@ -991,24 +1083,390 @@ void ClientCommand (edict_t *ent)
 		Cmd_Say_f (ent, false, true);
 }
 
-void Cmd_PlantCrop_f(edict_t* ent) {
-	edict_t* field = FindFieldUnderPlayer(ent);
+void Cmd_PlantCrop_f(edict_t* ent, int crop_type) {
+	edict_t* field = NULL;
+
+	// Find the field the player is interacting with
+	for (int i = 1; i < globals.num_edicts; i++) {
+		edict_t* other = &g_edicts[i];
+		if (!other->inuse || strcmp(other->classname, "trigger_field") != 0) {
+			continue; // Skip invalid or non-field entities
+		}
+
+		// Check if the player overlaps the field bounds
+		if (ent->absmin[0] > other->absmax[0] || ent->absmax[0] < other->absmin[0] ||
+			ent->absmin[1] > other->absmax[1] || ent->absmax[1] < other->absmin[1] ||
+			ent->absmin[2] > other->absmax[2] || ent->absmax[2] < other->absmin[2]) {
+			continue; // Not touching this field
+		}
+
+		field = other;
+		break;
+	}
+
+	// Check if a valid field was found
 	if (!field) {
-		gi.cprintf(ent, PRINT_HIGH, "You are not on a field!\n");
+		gi.cprintf(ent, PRINT_HIGH, "You are not on a valid field!\n");
 		return;
 	}
-	SpawnCrop(field, CROPTYPE_WHEAT);
-	gi.cprintf(ent, PRINT_HIGH, "Planted a crop!\n");
+
+	// Check if the field already has a crop
+	if (field->plantedcrop) {
+		gi.cprintf(ent, PRINT_HIGH, "This field already has a crop!\n");
+		return;
+	}
+
+	// Deduct 1 seed from the player's seed stock
+	ent->client->seed_stock -= 1;
+	gi.cprintf(ent, PRINT_HIGH, "Planted a crop. Remaining seeds: %d\n", ent->client->seed_stock);
+
+	// Debug log
+	gi.dprintf("Planting on field at position (%f, %f, %f)\n", field->s.origin[0], field->s.origin[1], field->s.origin[2]);
+
+	// Plant a new crop based on the specified crop type
+	SpawnCrop(field, crop_type);
+
+	// Provide feedback to the player
+	switch (crop_type) {
+	case CROPTYPE_WHEAT:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a wheat crop!\n");
+		break;
+	case CROPTYPE_CORN:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a corn crop!\n");
+		break;
+	case CROPTYPE_TOMATO:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a tomato crop!\n");
+		break;
+	case CROPTYPE_POTATO:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a potato crop!\n");
+		break;
+	case CROPTYPE_CARROT:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a carrot crop!\n");
+		break;
+	case CROPTYPE_BEAN:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a bean crop!\n");
+		break;
+	case CROPTYPE_PEPPER:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a pepper crop!\n");
+		break;
+	case CROPTYPE_CABBAGE:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a cabbage crop!\n");
+		break;
+	case CROPTYPE_ONION:
+		gi.cprintf(ent, PRINT_HIGH, "You planted an onion crop!\n");
+		break;
+	case CROPTYPE_GARLIC:
+		gi.cprintf(ent, PRINT_HIGH, "You planted a garlic crop!\n");
+		break;
+	default:
+		gi.cprintf(ent, PRINT_HIGH, "You planted an unknown crop!\n");
+		break;
+	}
 }
 
 void Cmd_HarvestCrop_f(edict_t* ent) {
-	edict_t* crop = FindCropUnderPlayer(ent);
-	if (crop && crop->plantedcrop->growth_stage >= 2) {
-		gi.cprintf(ent, PRINT_HIGH, "You harvested the crop!\n");
-		G_FreeEdict(crop);
+	gi.dprintf("Cmd_HarvestCrop_f: Function called.\n");
+	edict_t* field = NULL;
+
+	// Iterate through all entities to find the field the player is touching
+	for (int i = 1; i < globals.num_edicts; i++) {
+		edict_t* other = &g_edicts[i];
+		if (!other->inuse || strcmp(other->classname, "trigger_field") != 0) {
+			continue; // Skip invalid or non-field entities
+		}
+
+		// Check if the player overlaps the field bounds
+		if (ent->absmin[0] > other->absmax[0] || ent->absmax[0] < other->absmin[0] ||
+			ent->absmin[1] > other->absmax[1] || ent->absmax[1] < other->absmin[1] ||
+			ent->absmin[2] > other->absmax[2] || ent->absmax[2] < other->absmin[2]) {
+			continue; // Not touching this field
+		}
+
+		field = other;
+		break;
 	}
-	else {
-		gi.cprintf(ent, PRINT_HIGH, "No ripe crops to harvest here.\n");
+
+	gi.dprintf("Cmd_HarvestCrop_f: Field found.\n");
+
+	// Check if a valid field was found
+	if (!field) {
+		gi.cprintf(ent, PRINT_HIGH, "You are not on a valid field!\n");
+		return;
 	}
+
+	// Check if the field has a crop
+	if (!field->plantedcrop) {
+		gi.cprintf(ent, PRINT_HIGH, "No crop is planted here to harvest.\n");
+		return;
+	}
+
+	gi.dprintf("Cmd_HarvestCrop_f: Crop found.\n");
+
+	// Check if the crop is fully grown
+	crop_t* crop = field->plantedcrop;
+	if (!crop) {
+		gi.cprintf(ent, PRINT_HIGH, "Error: Invalid crop pointer.\n");
+		return;
+	}
+
+	if (crop->growth_stage < 2) { // Adjust the growth stage check as needed
+		gi.cprintf(ent, PRINT_HIGH, "The crop is not fully grown yet!\n");
+		return;
+	}
+
+	if (!field->plantedcrop || field->plantedcrop->growth_stage < 0) {  // Add sanity check
+		gi.cprintf(ent, PRINT_HIGH, "Invalid crop state.\n");
+		return;
+	}
+
+	gi.dprintf("Cmd_HarvestCrop_f: Harvesting crop.\n");
+
+	// Determine the currency reward and feedback based on the crop type
+	int currency_reward = 0;
+	const char* crop_name = "Unknown crop";
+	switch (crop->type) {
+	case CROPTYPE_WHEAT:
+		currency_reward = 10;
+		crop_name = "Wheat";
+		break;
+	case CROPTYPE_CORN:
+		currency_reward = 12;
+		crop_name = "Corn";
+		break;
+	case CROPTYPE_TOMATO:
+		currency_reward = 8;
+		crop_name = "Tomato";
+		break;
+	case CROPTYPE_POTATO:
+		currency_reward = 15;
+		crop_name = "Potato";
+		break;
+	case CROPTYPE_CARROT:
+		currency_reward = 9;
+		crop_name = "Carrot";
+		break;
+	case CROPTYPE_BEAN:
+		currency_reward = 7;
+		crop_name = "Bean";
+		break;
+	case CROPTYPE_PEPPER:
+		currency_reward = 11;
+		crop_name = "Pepper";
+		break;
+	case CROPTYPE_CABBAGE:
+		currency_reward = 14;
+		crop_name = "Cabbage";
+		break;
+	case CROPTYPE_ONION:
+		currency_reward = 13;
+		crop_name = "Onion";
+		break;
+	case CROPTYPE_GARLIC:
+		currency_reward = 10;
+		crop_name = "Garlic";
+		break;
+		// Add more cases for other crop types
+	default:
+		gi.cprintf(ent, PRINT_HIGH, "Unknown crop type! No currency awarded.\n");
+		return;
+	}
+
+	// Harvest the crop and award currency
+	gi.cprintf(ent, PRINT_HIGH, "You harvested a %s crop!\n", crop_name);
+	ent->client->currency += currency_reward;
+	gi.cprintf(ent, PRINT_HIGH, "You earned %d currency. Current balance: %d\n", currency_reward, ent->client->currency);
+	gi.dprintf("Player harvested %s crop at field (%f, %f, %f)\n",
+		crop_name, field->s.origin[0], field->s.origin[1], field->s.origin[2]);
+
+	// Free the crop and mark the field as available for planting again
+	if (crop) {
+		gi.dprintf("Cmd_HarvestCrop_f: Freeing crop entity.\n");
+		//G_FreeEdict(crop);
+		field->plantedcrop = NULL;
+	}
+
+	// Ensure the field's plantedcrop is set to NULL
+	if (field->plantedcrop) {
+		gi.dprintf("Cmd_HarvestCrop_f: Error - field's plantedcrop is not NULL after harvesting.\n");
+		field->plantedcrop = NULL;
+	}
+
+	gi.dprintf("Cmd_HarvestCrop_f: Crop harvested successfully.\n");
 }
 
+void Cmd_SpawnField_f(edict_t* ent) {
+	if (!ent || !ent->client) {
+		return; // Ensure it's a valid player entity
+	}
+
+	gi.cprintf(ent, PRINT_HIGH, "Spawning field trigger...\n");
+
+	// Spawn a field trigger near the player
+	SpawnFieldNearPlayer(ent);
+
+	// Notify the player that the field has been spawned
+	gi.cprintf(ent, PRINT_HIGH, "Field trigger spawned near you!\n");
+}
+
+void Cmd_DisplayResources_f(edict_t* ent)
+{
+	// Hide other UI elements if needed (e.g., inventory or score)
+	ent->client->showinventory = false;
+	ent->client->showscores = false;
+
+	// Display the currency and seed stock directly on the screen
+	gi.cprintf(ent, PRINT_HIGH, "Currency: %d\n", ent->client->currency);
+	gi.cprintf(ent, PRINT_HIGH, "Seed Stock: %d\n", ent->client->seed_stock);
+}
+
+void Cmd_AddSeeds_f(edict_t* ent)
+{
+	int amount = 10;  // Default amount to add 
+
+	// Check if a specific amount was passed with the command
+	if (gi.argc() > 1)
+	{
+		amount = atoi(gi.argv(1));  // Parse the argument (if any) into an integer
+	}
+
+	// Add seeds to the player's seed stock
+	ent->client->seed_stock += amount;
+
+	// Make sure the seed stock doesn't go negative
+	if (ent->client->seed_stock < 0)
+	{
+		ent->client->seed_stock = 0;
+	}
+
+	// Print a message to the player confirming the addition
+	gi.cprintf(ent, PRINT_HIGH, "Added %d seeds. You now have %d seeds.\n", amount, ent->client->seed_stock);
+}
+
+void Cmd_SpawnFlyer_f(edict_t* ent) {
+	if (!ent || !ent->client) {
+		return; // Ensure it's a valid player entity
+	}
+
+	gi.cprintf(ent, PRINT_HIGH, "Spawning flyer monster...\n");
+
+	// Spawn a flyer monster near the player
+	SpawnFlyerNearPlayer(ent);
+
+	// Notify the player that the flyer has been spawned
+	gi.cprintf(ent, PRINT_HIGH, "Flyer monster spawned near you!\n");
+}
+
+void Cmd_SpawnShopkeeper_f(edict_t* ent) {
+	edict_t* shopkeeper_entity;
+
+	// Create a new entity for the shopkeeper
+	shopkeeper_entity = G_Spawn();
+	if (!shopkeeper_entity) {
+		gi.cprintf(ent, PRINT_HIGH, "Failed to spawn shopkeeper.\n");
+		return;
+	}
+
+	// Set the shopkeeper's position to the player's location
+	VectorCopy(ent->s.origin, shopkeeper_entity->s.origin);
+	shopkeeper_entity->s.origin[2] += 24;  // Slightly above the ground
+
+	// Set the shopkeeper entity properties
+	shopkeeper_entity->classname = "shopkeeper";
+	shopkeeper_entity->movetype = MOVETYPE_NONE;  // Shopkeepers don’t move
+	shopkeeper_entity->solid = SOLID_BBOX;
+	shopkeeper_entity->model = "models/monsters/boss2/tris.md2";  
+	shopkeeper_entity->s.modelindex = gi.modelindex(shopkeeper_entity->model);
+	VectorSet(shopkeeper_entity->mins, -16, -16, -24);  // Adjust bounding box
+	VectorSet(shopkeeper_entity->maxs, 16, 16, 32);
+
+	// Link the entity into the world
+	gi.linkentity(shopkeeper_entity);
+
+	// Output shopkeeper details to the console (for debugging)
+	gi.cprintf(ent, PRINT_HIGH, "Shopkeeper '%s' spawned at your location.\n", shopkeeper.name);
+}
+
+void Cmd_InteractShopkeeper_f(edict_t* ent) {
+	edict_t* shopkeeper_ent = NULL;
+	// Iterate through all entities to find the shopkeeper the player is touching
+	for (int i = 1; i < globals.num_edicts; i++) {
+		edict_t* other = &g_edicts[i];
+		if (!other->inuse || strcmp(other->classname, "shopkeeper") != 0) {
+			continue; // Skip invalid or non-shopkeeper entities
+		}
+		// Check if the player overlaps the shopkeeper bounds
+		if (ent->absmin[0] > other->absmax[0] || ent->absmax[0] < other->absmin[0] ||
+			ent->absmin[1] > other->absmax[1] || ent->absmax[1] < other->absmin[1] ||
+			ent->absmin[2] > other->absmax[2] || ent->absmax[2] < other->absmin[2]) {
+			continue; // Not touching this shopkeeper
+		}
+
+		shopkeeper_ent = other;
+		break;
+	}
+
+	// Check if a valid shopkeeper was found
+	if (!shopkeeper_ent) {
+		gi.cprintf(ent, PRINT_HIGH, "You are not near a shopkeeper!\n");
+		return;
+	}
+
+	// Display shopkeeper menu
+	gi.cprintf(ent, PRINT_HIGH, "Welcome to the shop! What would you like to buy?\n");
+	gi.cprintf(ent, PRINT_HIGH, "1. Buy Seeds (%d currency for 5 seeds)\n", shopkeeper.seed_price);
+	gi.cprintf(ent, PRINT_HIGH, "2. Buy Tools (%d currency for a shotgun)\n", shopkeeper.tool_price);
+	gi.cprintf(ent, PRINT_HIGH, "3. Exit\n");
+
+	// Set interaction flag
+	ent->client->interacting_with_shopkeeper = true;
+}
+
+void Cmd_HandleShopkeeperInput_f(edict_t* ent, int choice) {
+	if (!ent->client->interacting_with_shopkeeper) {
+		gi.cprintf(ent, PRINT_HIGH, "You are not interacting with a shopkeeper!\n");
+		return;
+	}
+
+	switch (choice) {
+	case 1:
+		if (ent->client->currency >= shopkeeper.seed_price) {
+			ent->client->currency -= shopkeeper.seed_price;
+			ent->client->seed_stock += 5;
+			gi.cprintf(ent, PRINT_HIGH, "You bought 5 seeds! Remaining currency: %d\n", ent->client->currency);
+		}
+		else {
+			gi.cprintf(ent, PRINT_HIGH, "You don't have enough currency to buy seeds!\n");
+		}
+		break;
+	case 2:
+		if (ent->client->currency >= shopkeeper.tool_price) {
+			ent->client->currency -= shopkeeper.tool_price;
+			// Check if the player already has the shotgun
+			if (!(ent->client->pers.inventory[ITEM_INDEX(FindItem("Shotgun"))])) {
+				// Add the shotgun to the player's inventory
+				gitem_t* shotgun = FindItem("Shotgun");
+				ent->client->pers.inventory[ITEM_INDEX(shotgun)] = 1; // Add one shotgun
+				// Add some initial ammo for the shotgun
+				gitem_t* shells = FindItem("Shells");
+				Add_Ammo(ent, shells, 10); // Add 10 shells
+
+				gi.cprintf(ent, PRINT_HIGH, "You bought a shotgun! Remaining currency: %d\n", ent->client->currency);
+			}
+			else {
+				gi.cprintf(ent, PRINT_HIGH, "You already own a shotgun!\n");
+				ent->client->currency += shopkeeper.tool_price; // Refund
+			}
+		}
+		else {
+			gi.cprintf(ent, PRINT_HIGH, "You don't have enough currency to buy a shotgun!\n");
+		}
+		break;
+	case 3:
+		gi.cprintf(ent, PRINT_HIGH, "Thank you for visiting the shop!\n");
+		ent->client->interacting_with_shopkeeper = false;
+		break;
+	default:
+		gi.cprintf(ent, PRINT_HIGH, "Invalid choice!\n");
+		break;
+	}
+}

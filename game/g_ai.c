@@ -404,184 +404,65 @@ checked each frame.  This means multi player games will have slightly
 slower noticing monsters.
 ============
 */
-qboolean FindTarget (edict_t *self)
+qboolean FindTarget(edict_t* self) //JL modified to only target 'crop' entities
 {
-	edict_t		*client;
-	qboolean	heardit;
-	int			r;
+	edict_t* potentialTarget;
+	qboolean heardit = false;
+	int r;
 
+	// If the monster is flagged as a "good guy", it won't target anything
 	if (self->monsterinfo.aiflags & AI_GOOD_GUY)
-	{
-		if (self->goalentity && self->goalentity->inuse && self->goalentity->classname)
-		{
-			if (strcmp(self->goalentity->classname, "target_actor") == 0)
-				return false;
-		}
-
-		//FIXME look for monsters?
 		return false;
-	}
 
-	// if we're going to a combat point, just proceed
+	// Ignore AI_COMBAT_POINT flag
 	if (self->monsterinfo.aiflags & AI_COMBAT_POINT)
 		return false;
 
-// if the first spawnflag bit is set, the monster will only wake up on
-// really seeing the player, not another monster getting angry or hearing
-// something
-
-// revised behavior so they will wake up if they "see" a player make a noise
-// but not weapon impact/explosion noises
-
-	heardit = false;
-	if ((level.sight_entity_framenum >= (level.framenum - 1)) && !(self->spawnflags & 1) )
+	// Check for sight, sound, or other triggers
+	if ((level.sight_entity_framenum >= (level.framenum - 1)) && !(self->spawnflags & 1))
 	{
-		client = level.sight_entity;
-		if (client->enemy == self->enemy)
-		{
-			return false;
-		}
+		potentialTarget = level.sight_entity;
 	}
 	else if (level.sound_entity_framenum >= (level.framenum - 1))
 	{
-		client = level.sound_entity;
+		potentialTarget = level.sound_entity;
 		heardit = true;
 	}
-	else if (!(self->enemy) && (level.sound2_entity_framenum >= (level.framenum - 1)) && !(self->spawnflags & 1) )
+	else if (level.sound2_entity_framenum >= (level.framenum - 1) && !(self->spawnflags & 1))
 	{
-		client = level.sound2_entity;
+		potentialTarget = level.sound2_entity;
 		heardit = true;
 	}
 	else
 	{
-		client = level.sight_client;
-		if (!client)
-			return false;	// no clients to get mad at
+		potentialTarget = level.sight_client;
+		if (!potentialTarget)
+			return false; // No valid targets
 	}
 
-	// if the entity went away, forget it
-	if (!client->inuse)
+	// Check if the potential target is valid and active
+	if (!potentialTarget->inuse)
 		return false;
 
-	if (client == self->enemy)
-		return true;	// JDC false;
-
-	if (client->client)
-	{
-		if (client->flags & FL_NOTARGET)
-			return false;
-	}
-	else if (client->svflags & SVF_MONSTER)
-	{
-		if (!client->enemy)
-			return false;
-		if (client->enemy->flags & FL_NOTARGET)
-			return false;
-	}
-	else if (heardit)
-	{
-		if (client->owner->flags & FL_NOTARGET)
-			return false;
-	}
-	else
+	// JL: Only target entities with classname "crop"
+	if (strcmp(potentialTarget->classname, "crop") != 0)
 		return false;
 
-	if (!heardit)
-	{
-		r = range (self, client);
+	// If the crop is too far away or not visible, ignore it
+	r = range(self, potentialTarget);
+	if (r == RANGE_FAR || !visible(self, potentialTarget))
+		return false;
 
-		if (r == RANGE_FAR)
-			return false;
+	// Assign the crop as the enemy
+	self->enemy = potentialTarget;
 
-// this is where we would check invisibility
+	// Handle targeting logic (optional sound/visual cues for the monster)
+	FoundTarget(self);
+	if (!(self->monsterinfo.aiflags & AI_SOUND_TARGET) && self->monsterinfo.sight)
+		self->monsterinfo.sight(self, self->enemy);
 
-		// is client in an spot too dark to be seen?
-		if (client->light_level <= 5)
-			return false;
-
-		if (!visible (self, client))
-		{
-			return false;
-		}
-
-		if (r == RANGE_NEAR)
-		{
-			if (client->show_hostile < level.time && !infront (self, client))
-			{
-				return false;
-			}
-		}
-		else if (r == RANGE_MID)
-		{
-			if (!infront (self, client))
-			{
-				return false;
-			}
-		}
-
-		self->enemy = client;
-
-		if (strcmp(self->enemy->classname, "player_noise") != 0)
-		{
-			self->monsterinfo.aiflags &= ~AI_SOUND_TARGET;
-
-			if (!self->enemy->client)
-			{
-				self->enemy = self->enemy->enemy;
-				if (!self->enemy->client)
-				{
-					self->enemy = NULL;
-					return false;
-				}
-			}
-		}
-	}
-	else	// heardit
-	{
-		vec3_t	temp;
-
-		if (self->spawnflags & 1)
-		{
-			if (!visible (self, client))
-				return false;
-		}
-		else
-		{
-			if (!gi.inPHS(self->s.origin, client->s.origin))
-				return false;
-		}
-
-		VectorSubtract (client->s.origin, self->s.origin, temp);
-
-		if (VectorLength(temp) > 1000)	// too far to hear
-		{
-			return false;
-		}
-
-		// check area portals - if they are different and not connected then we can't hear it
-		if (client->areanum != self->areanum)
-			if (!gi.AreasConnected(self->areanum, client->areanum))
-				return false;
-
-		self->ideal_yaw = vectoyaw(temp);
-		M_ChangeYaw (self);
-
-		// hunt the sound for a bit; hopefully find the real player
-		self->monsterinfo.aiflags |= AI_SOUND_TARGET;
-		self->enemy = client;
-	}
-
-//
-// got one
-//
-	FoundTarget (self);
-
-	if (!(self->monsterinfo.aiflags & AI_SOUND_TARGET) && (self->monsterinfo.sight))
-		self->monsterinfo.sight (self, self->enemy);
-
-	return true;
+	return true; // Target acquired
 }
-
 
 //=============================================================================
 
@@ -897,8 +778,8 @@ qboolean ai_checkattack (edict_t *self, float dist)
 	}
 
 	// if enemy is not currently visible, we will never attack
-	if (!enemy_vis)
-		return false;
+	//if (!enemy_vis)
+		//return false;
 
 	return self->monsterinfo.checkattack (self);
 }

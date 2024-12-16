@@ -830,28 +830,28 @@ void Blaster_Fire(edict_t* ent, vec3_t g_offset, int damage, qboolean hyper, int
 	ent->client->kick_angles[0] = -1;
 
 	//center bullet
-	fire_rocket(ent, start, forward, damage, 1000, 1000, 10); 
+	//fire_rocket(ent, start, forward, damage, 1000, 1000, 10); 
 	fire_rail(ent, start, forward, damage, 1); 
-	fire_bfg(ent, start, forward, damage, 400, 100);
-	fire_grenade(ent, start, forward, damage, 600, 2.5, 100); 
+	//fire_bfg(ent, start, forward, damage, 400, 100);
+	//fire_grenade(ent, start, forward, damage, 600, 2.5, 100); 
 
 	//right bullet
 	VectorNormalize(right);
 	VectorScale(right, 8, right);
 	VectorAdd(start, right, start);
-	fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
+	//fire_rocket(ent, start, forward, damage, 1000, 1000, 10);
 	fire_rail(ent, start, forward, damage, 1); 
-	fire_bfg(ent, start, forward, damage, 400, 100); 
-	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+	//fire_bfg(ent, start, forward, damage, 400, 100); 
+	//fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
 
 	//left bullet
 	VectorNormalize(right); 
 	VectorScale(right, -14, right);
 	VectorAdd(start, right, start);
-	fire_rocket(ent, start, forward, damage, 1000, 1000, 10); //removed extra 10000 argument
+	//fire_rocket(ent, start, forward, damage, 1000, 1000, 10); //removed extra 10000 argument
 	fire_rail(ent, start, forward, damage, 1);
-	fire_bfg(ent, start, forward, damage, 400, 100); 
-	fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
+	//fire_bfg(ent, start, forward, damage, 400, 100); 
+	//fire_grenade(ent, start, forward, damage, 600, 2.5, 100);
 
 	//fire_blaster(ent, start, forward, damage, 1000, effect, hyper); old blaster fire call
 

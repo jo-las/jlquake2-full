@@ -597,19 +597,20 @@ void SP_trigger_monsterjump (edict_t *self)
 }
 
 void SP_trigger_field(edict_t* self) {
-	// Set up the basic properties for the trigger field
 	self->classname = "trigger_field";
 	self->solid = SOLID_BBOX;
 	self->movetype = MOVETYPE_NONE;
-	VectorSet(self->mins, -16, -16, 0); // Size of the trigger box
-	VectorSet(self->maxs, 16, 16, 8);
+
+	// Adjust bounds for better collision detection
+	VectorSet(self->mins, -24, -24, 0);  // Larger area for easier interaction
+	VectorSet(self->maxs, 24, 24, 32);  // Adjust height for better coverage
 
 	// Set the model index to a visible representation
-	self->s.modelindex = gi.modelindex("models/objects/cube/tris.md2"); // Replace with any desired model
+	self->s.modelindex = gi.modelindex("models/objects/cube/tris.md2"); // Replace with your preferred model
 
-	// Set the think function for crop growth (if applicable)
-	self->think = CropThink;
-	self->nextthink = level.time + 10.0; // Initial delay
+	// Set the think function
+	self->think = FieldThink;
+	self->nextthink = level.time + 0.1f;
 
 	gi.linkentity(self); // Link the entity to the game world
 }

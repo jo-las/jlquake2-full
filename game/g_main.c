@@ -409,34 +409,288 @@ void G_RunFrame (void)
 	ClientEndServerFrames ();
 }
 
-void CropThink(edict_t* crop) { //JL
-	gi.dprintf("Crop growth stage: %d\n", crop->count);
-	if (level.time >= crop->plantedcrop->grow_time) {
-		crop->plantedcrop->growth_stage++;
-		crop->plantedcrop->grow_time = level.time + 10.0f; // 10 seconds to next stage
+//JL START FARMING FUNCTIONS
+//note: most of these 
 
-		// Update model for each growth stage
-		switch (crop->plantedcrop->growth_stage) {
-		case 1:
-			crop->s.modelindex = gi.modelindex("models/items/armor/body/tris.md2"); // Sprout stage
-			break;
-		case 2:
-			crop->s.modelindex = gi.modelindex("models/objects/flag/tris.md2"); // Fully grown
-			break;
-		default:
-			crop->think = NULL; // Stop thinking when fully grown
+//crop attribute init
+crop_attributes_t crop_attributes[] = {
+	{ CROPTYPE_WHEAT, "Wheat", WHEAT_MODEL, 10.0f, 10.0f },
+	{ CROPTYPE_CORN, "Corn", CORN_MODEL, 12.0f, 12.0f },
+	{ CROPTYPE_TOMATO, "Tomato", TOMATO_MODEL, 8.0f, 8.0f },
+	{ CROPTYPE_POTATO, "Potato", POTATO_MODEL, 15.0f, 15.0f },
+	{ CROPTYPE_CARROT, "Carrot", CARROT_MODEL, 9.0f, 9.0f },
+	{ CROPTYPE_BEAN, "Bean", BEAN_MODEL, 7.0f, 7.0f },
+	{ CROPTYPE_PEPPER, "Pepper", PEPPER_MODEL, 11.0f, 11.0f },
+	{ CROPTYPE_CABBAGE, "Cabbage", CABBAGE_MODEL, 14.0f, 14.0f },
+	{ CROPTYPE_ONION, "Onion", ONION_MODEL, 13.0f, 13.0f },
+	{ CROPTYPE_GARLIC, "Garlic", GARLIC_MODEL, 10.0f, 10.0f }
+};
+
+void InitCrop(edict_t* crop, edict_t* field, int type) {
+	crop_t* new_crop = gi.TagMalloc(sizeof(crop_t), TAG_GAME);
+	if (!new_crop) {
+		gi.dprintf("InitCrop: Failed to allocate memory for crop data!\n");
+		G_FreeEdict(crop);
+		return;
+	}
+
+	// Find the crop attributes based on the crop type
+	crop_attributes_t* attributes = NULL;
+	for (int i = 0; i < sizeof(crop_attributes) / sizeof(crop_attributes[0]); i++) {
+		if (crop_attributes[i].type == type) {
+			attributes = &crop_attributes[i];
 			break;
 		}
 	}
+
+	// Handle case where no attributes are found
+	if (!attributes) {
+		gi.dprintf("InitCrop: Unknown crop type!\n");
+		G_FreeEdict(crop);
+		return;
+	}
+
+	new_crop->type = type;
+	new_crop->growth_stage = 0;
+	new_crop->grow_time = level.time + attributes->initial_grow_time; // Initial growth time
+	field->plantedcrop = new_crop;
+
+	crop->owner = field; // Link crop to its field
+	crop->movetype = MOVETYPE_NONE;
+	crop->solid = SOLID_BBOX;
+	crop->s.modelindex = gi.modelindex(attributes->model);
+
+	VectorCopy(field->s.origin, crop->s.origin);
+
+	gi.linkentity(crop); // Add crop to the game world
+
+	crop->think = CropThink;
 	crop->nextthink = level.time + 0.1f;
+
+	gi.dprintf("InitCrop: %s initialized successfully at (%f, %f, %f).\n",
+		attributes->name, field->s.origin[0], field->s.origin[1], field->s.origin[2]);
 }
 
-void FindFieldUnderPlayer(edict_t* crop) {
+void CropThink(edict_t* crop) {
+	if (!crop || !crop->owner || !crop->owner->plantedcrop) {
+		gi.dprintf("CropThink: Invalid crop or owner data! Terminating.\n");
+		G_FreeEdict(crop); // Remove invalid crop
+		return;
+	}
 
+	crop_t* crop_data = crop->owner->plantedcrop;
+
+	if (!crop_data) {
+		gi.dprintf("CropThink: No crop data found! Terminating.\n");
+		G_FreeEdict(crop); // Remove invalid crop
+		return;
+	}
+
+	// Find the crop attributes based on the crop type
+	crop_attributes_t* attributes = NULL;
+	for (int i = 0; i < sizeof(crop_attributes) / sizeof(crop_attributes[0]); i++) {
+		if (crop_attributes[i].type == crop_data->type) {
+			attributes = &crop_attributes[i];
+			break;
+		}
+	}
+
+	if (!attributes) {
+		gi.dprintf("CropThink: Unknown crop type!\n");
+		G_FreeEdict(crop); // Remove invalid crop
+		return;
+	}
+
+	// Check growth stage and time
+	if (level.time >= crop_data->grow_time) {
+		crop_data->growth_stage++;
+		crop_data->grow_time = level.time + attributes->growth_interval; // Next growth stage
+
+		gi.dprintf("CropThink: %s grew to stage %d at (%f, %f, %f).\n",
+			attributes->name, crop_data->growth_stage, crop->s.origin[0], crop->s.origin[1], crop->s.origin[2]);
+
+		// Update model or properties based on growth stage and crop type
+		switch (crop_data->type) {
+		case CROPTYPE_WHEAT:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+					
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Wheat is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_CORN:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Corn is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_TOMATO:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md22");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Tomato is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_POTATO:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Potato is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_CARROT:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Carrot is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_BEAN:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Bean is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_PEPPER:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Pepper is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_CABBAGE:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Cabbage is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_ONION:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Onion is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		case CROPTYPE_GARLIC:
+			if (crop_data->growth_stage == 1) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage == 2) {
+				crop->s.modelindex = gi.modelindex("models/objects/tree/tris.md2");
+			}
+			else if (crop_data->growth_stage >= 3) {
+				gi.dprintf("CropThink: Garlic is fully grown!\n");
+				return; // Fully grown, stop growth
+			}
+			break;
+		}
+	}
+
+	// Schedule the next think only if the crop is still valid
+	if (crop && crop->inuse) {
+		crop->nextthink = level.time + 0.1f;
+	}
+	else {
+		gi.dprintf("CropThink: Crop is no longer valid. Terminating.\n");
+	}
 }
 
-void FindCropUnderPlayer(edict_t* crop) {
+void FieldThink(edict_t* self) {
+	qboolean isTouching = false;
 
+	// Iterate through all entities in the game world
+	for (int i = 1; i < globals.num_edicts; i++) {
+		edict_t* other = &g_edicts[i];
+
+		// Skip invalid entities
+		if (!other->inuse || !other->client || other->health <= 0) {
+			continue;
+		}
+
+		// Check if the player overlaps with the trigger field's bounds
+		if (other->absmin[0] > self->absmax[0] || other->absmax[0] < self->absmin[0] ||
+			other->absmin[1] > self->absmax[1] || other->absmax[1] < self->absmin[1] ||
+			other->absmin[2] > self->absmax[2] || other->absmax[2] < self->absmin[2]) {
+			continue; // Player is outside the field
+		}
+
+		// A player is touching the field
+		isTouching = true;
+
+		if (!self->touching_field) {
+			self->touching_field = true;
+			self->touching_entity = other;  // Update touching_entity
+			gi.dprintf("Player %s started touching the field.\n", other->client->pers.netname);
+		}
+		break;
+	}
+
+	if (!isTouching) {
+		// No players are touching the field anymore
+		if (self->touching_field) {
+			self->touching_field = false;
+			self->touching_entity = NULL;  // Reset touching_entity
+			gi.dprintf("No players are touching the field anymore.\n");
+		}
+	}
+
+	// Schedule the next think
+	self->nextthink = level.time + 0.1f;
 }
 
+// shopkeeper init
+shopkeeper_t shopkeeper = {
+	.name = "Shopkeeper",
+	.seed_price = 5,
+	.tool_price = 20
+};
 

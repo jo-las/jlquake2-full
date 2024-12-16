@@ -619,6 +619,17 @@ void InitClientPersistant (gclient_t *client)
 	client->pers.health			= 100;
 	client->pers.max_health		= 100;
 
+	//JL initialize farming stuff
+	if (client->currency == 0) {
+		client->currency = 100; // Starting currency
+	}
+	if (client->seed_stock == 0) {
+		client->seed_stock = 10; // Starting seed stock
+	}
+
+	// Debug check
+	gi.dprintf("Player initialized with Currency: %d, Seed Stock: %d\n", client->currency, client->seed_stock);
+
 	client->pers.max_bullets	= 200;
 	client->pers.max_shells		= 100;
 	client->pers.max_rockets	= 50;

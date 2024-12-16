@@ -984,35 +984,80 @@ void SP_worldspawn (edict_t *ent)
 	gi.configstring(CS_LIGHTS+63, "a");
 }
 
-//JL
+//JL Spawn functions for the crop, the field, the shopkeep, pests
+
 void SpawnCrop(edict_t* field, int type) {
+	if (!field) {
+		gi.dprintf("SpawnCrop: Invalid field reference!\n");
+		return;
+	}
+
+	if (field->plantedcrop) {
+		gi.dprintf("SpawnCrop: Field already has a crop!\n");
+		return;
+	}
+
 	edict_t* crop = G_Spawn();
-	crop->plantedcrop = gi.TagMalloc(sizeof(crop_t), TAG_GAME);
-	crop->plantedcrop->type = type;
-	crop->plantedcrop->growth_stage = 0;
-	crop->plantedcrop->grow_time = level.time + 10.0f; // 10 seconds per stage
+	if (!crop) {
+		gi.dprintf("SpawnCrop: Failed to spawn crop entity!\n");
+		return;
+	}
 
-	// Use existing game models
-	crop->s.modelindex = gi.modelindex("models/items/adrenaline/tris.md2"); // Seed stage
-	crop->movetype = MOVETYPE_NONE;
-	crop->solid = SOLID_BBOX;
-
-	// Position crop at the field's location
-	VectorCopy(field->s.origin, crop->s.origin);
-	VectorAdd(crop->s.origin, vec3_origin, crop->s.origin);
-	gi.linkentity(crop);
-
-	gi.dprintf("Spawning crop type %d at field.\n", type);
-
-	crop->think = CropThink;
-	crop->nextthink = level.time + 0.1f;
+	InitCrop(crop, field, type);
 }
 
 void SpawnFieldNearPlayer(edict_t* player) {
 	edict_t* field = G_Spawn();
+	if (!field) {
+		gi.dprintf("Failed to spawn field entity.\n");
+		return;
+	}
+
 	field->classname = "trigger_field";
 	VectorCopy(player->s.origin, field->s.origin);
-	field->s.origin[0] += 50; // Offset slightly from the player
+	field->s.origin[0] += 50;
+	field->s.origin[1] += 50;
+
+	gi.dprintf("Spawned field at (%f, %f, %f)\n", field->s.origin[0], field->s.origin[1], field->s.origin[2]);
 	SP_trigger_field(field);
+}
+
+void SpawnShopkeeper() {
+	edict_t* shopkeeper_ent = G_Spawn();
+	if (!shopkeeper_ent) {
+		gi.dprintf("Failed to spawn shopkeeper entity.\n");
+		return;
+	}
+
+	shopkeeper_ent->classname = "shopkeeper";
+	VectorSet(shopkeeper_ent->mins, -16, -16, -24);
+	VectorSet(shopkeeper_ent->maxs, 16, 16, 32);
+	shopkeeper_ent->movetype = MOVETYPE_NONE;
+	shopkeeper_ent->solid = SOLID_BBOX;
+	shopkeeper_ent->s.modelindex = gi.modelindex("models/monsters/soldier/tris.md2"); // Use the friendly medic NPC model
+	shopkeeper_ent->s.origin[0] = 100; // Set the shopkeeper's position
+	shopkeeper_ent->s.origin[1] = 100;
+	shopkeeper_ent->s.origin[2] = 0;
+
+	gi.linkentity(shopkeeper_ent); // Add shopkeeper to the game world
+
+	gi.dprintf("Shopkeeper spawned at (%f, %f, %f)\n",
+		shopkeeper_ent->s.origin[0], shopkeeper_ent->s.origin[1], shopkeeper_ent->s.origin[2]);
+}
+
+void SpawnFlyerNearPlayer(edict_t* player) {
+	edict_t* flyer = G_Spawn();
+	if (!flyer) {
+		gi.dprintf("Failed to spawn flyer monster entity.\n");
+		return;
+	}
+
+	flyer->classname = "monster_flyer";
+	VectorCopy(player->s.origin, flyer->s.origin);
+	flyer->s.origin[0] += 50; // Adjust the position as needed
+	flyer->s.origin[1] += 50; // Adjust the position as needed
+
+	gi.dprintf("Spawned flyer at (%f, %f, %f)\n", flyer->s.origin[0], flyer->s.origin[1], flyer->s.origin[2]);
+	SP_monster_flyer(flyer); // Call the setup function for the flyer monster
 }
 

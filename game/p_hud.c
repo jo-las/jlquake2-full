@@ -163,6 +163,7 @@ DeathmatchScoreboardMessage
 */
 void DeathmatchScoreboardMessage (edict_t *ent, edict_t *killer)
 {
+	/* getting rid of the existing scoreboard logic
 	char	entry[1024];
 	char	string[1400];
 	int		stringlength;
@@ -245,6 +246,20 @@ void DeathmatchScoreboardMessage (edict_t *ent, edict_t *killer)
 		strcpy (string + stringlength, entry);
 		stringlength += j;
 	}
+	*/
+	char string[1024];
+
+	// Custom help text
+	Com_sprintf(string, sizeof(string),
+		"xv 32 yv 32 cstring2 \"HOW TO PLAY:\" "
+		"xv 32 yv 48 cstring2 \"- Use the 'spawnfield' command to spawn a field\" "
+		"xv 32 yv 64 cstring2 \"- Walk up to the field and touch it to plant a crop\" "
+		"xv 32 yv 80 cstring2 \"- Wait for the plant to grow, then use 'harvestfield'\" "
+		"xv 32 yv 96 cstring2 \"- Planting crops requires seeds; harvesting gives money\" "
+		"xv 32 yv 112 cstring2 \"- Interact with the Shop NPC to buy tools or seeds\" "
+		"xv 32 yv 128 cstring2 \"- Shoot pests that are attacking your crops!\" "
+		"xv 32 yv 144 cstring2 \"- Weather affects crop growth, keep an eye out!\" "
+		"xv 50 yv 172 string2 \"Press F1 to toggle this menu.\" ");
 
 	gi.WriteByte (svc_layout);
 	gi.WriteString (string);
@@ -261,7 +276,7 @@ Note that it isn't that hard to overflow the 1400 byte message limit!
 */
 void DeathmatchScoreboard (edict_t *ent)
 {
-	DeathmatchScoreboardMessage (ent, ent->enemy);
+	DeathmatchScoreboardMessage (ent, NULL);
 	gi.unicast (ent, true);
 }
 
@@ -299,6 +314,32 @@ HelpComputer
 Draw help computer.
 ==================
 */
+
+//new help screen ONLY WORKS IN SINGLEPLAYER
+void HelpComputer(edict_t* ent)
+{
+	char string[1024];
+
+	// Custom help screen content
+	Com_sprintf(string, sizeof(string),
+		"xv 32 yv 8 picn help "                     // Background image (help)
+		"xv 32 yv 32 cstring2 \"HOW TO PLAY:\" "    // Title
+		"xv 32 yv 48 cstring2 \"- Use the 'spawnfield' command to spawn a field\" "
+		"xv 32 yv 64 cstring2 \"- Walk up to the field and touch it to plant a crop\" "
+		"xv 32 yv 80 cstring2 \"- Wait for the plant to grow, then use 'harvestfield'\" "
+		"xv 32 yv 96 cstring2 \"- Planting crops requires seeds; harvesting gives money\" "
+		"xv 32 yv 112 cstring2 \"- Interact with the Shop NPC to buy tools or seeds\" "
+		"xv 32 yv 128 cstring2 \"- Defend crops from pests! Shoot them before they reach crops\" "
+		"xv 32 yv 144 cstring2 \"- Weather affects crops; be prepared for challenges!\" "
+		"xv 50 yv 172 string2 \"Press F1 to toggle this menu.\" "
+	);
+
+	gi.WriteByte(svc_layout);
+	gi.WriteString(string);
+	gi.unicast(ent, true);
+}
+
+/* old help screen
 void HelpComputer (edict_t *ent)
 {
 	char	string[1024];
@@ -334,7 +375,7 @@ void HelpComputer (edict_t *ent)
 	gi.WriteString (string);
 	gi.unicast (ent, true);
 }
-
+*/
 
 /*
 ==================
@@ -568,4 +609,3 @@ void G_SetSpectatorStats (edict_t *ent)
 	else
 		cl->ps.stats[STAT_CHASE] = 0;
 }
-

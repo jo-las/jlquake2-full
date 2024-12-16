@@ -572,11 +572,11 @@ void flyer_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 */
 void SP_monster_flyer (edict_t *self)
 {
-	if (deathmatch->value)
+	/*if (deathmatch->value)
 	{
 		G_FreeEdict (self);
 		return;
-	}
+	}*/
 
 	// fix a map bug in jail5.bsp
 	if (!Q_stricmp(level.mapname, "jail5") && (self->s.origin[2] == -104))
@@ -623,4 +623,6 @@ void SP_monster_flyer (edict_t *self)
 	self->monsterinfo.scale = MODEL_SCALE;
 
 	flymonster_start (self);
+
+	FindTarget(self);
 }

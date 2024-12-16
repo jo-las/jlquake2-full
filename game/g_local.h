@@ -602,6 +602,19 @@ extern	gitem_t	itemlist[];
 void Cmd_Help_f (edict_t *ent);
 void Cmd_Score_f (edict_t *ent);
 
+//prototypes for plant/harvest commands JL
+void Cmd_PlantCrop_f(edict_t* ent, int crop_type);
+void Cmd_HarvestCrop_f(edict_t* ent);
+void Cmd_SpawnField_f(edict_t* ent); 
+void Cmd_DisplayResources_f(edict_t* ent);
+void Cmd_AddSeeds_f(edict_t* ent);
+//prototypes for shopkeeper npc
+void Cmd_HandleShopkeeperInput_f(edict_t* ent, int choice);
+void Cmd_InteractShopkeeper_f(edict_t* ent); 
+void Cmd_SpawnShopkeeper_f(edict_t* ent);
+//prototype for monster spawner
+void Cmd_SpawnFlyer_f(edict_t* ent);
+
 //
 // g_items.c
 //
@@ -959,12 +972,39 @@ struct gclient_s
 
 	edict_t		*chase_target;		// player we are chasing
 	qboolean	update_chase;		// need to update chase info?
+
+	//JL client stuff; client's currency, seed stock, interaction flag
+	int currency; 
+	int seed_stock;
+	qboolean interacting_with_shopkeeper; //boolean that checks for shopkeeper interaction state
 };
 
+//START CROP STUFF JL
+//JL defining/making structures for crops and crop attributes
+//most of these models are just placeholders, 99% sure they dont actually exist
 #define CROPTYPE_WHEAT 1
-#define WHEAT_MODEL "models/props/wheat/tris.md2"
+#define WHEAT_MODEL "models/objects/tree/tris.md2"
+#define CROPTYPE_CORN 2
+#define CORN_MODEL "models/objects/barrel/tris.md2"
+#define CROPTYPE_TOMATO 3
+#define TOMATO_MODEL "models/objects/crate/tris.md2"
+#define CROPTYPE_POTATO 4
+#define POTATO_MODEL "models/objects/chair/tris.md2"
+#define CROPTYPE_CARROT 5
+#define CARROT_MODEL "models/objects/lamp/tris.md2"
+#define CROPTYPE_BEAN 6
+#define BEAN_MODEL "models/objects/table/tris.md2"
+#define CROPTYPE_PEPPER 7
+#define PEPPER_MODEL "models/objects/bench/tris.md2"
+#define CROPTYPE_CABBAGE 8
+#define CABBAGE_MODEL "models/objects/sign/tris.md2"
+#define CROPTYPE_ONION 9
+#define ONION_MODEL "models/objects/fence/tris.md2"
+#define CROPTYPE_GARLIC 10
+#define GARLIC_MODEL "models/objects/well/tris.md2"
 
-typedef struct crop_s //JL
+//crop structures
+typedef struct crop_s 
 {
 	int type;
 	int growth_stage;
@@ -972,16 +1012,31 @@ typedef struct crop_s //JL
 	int finalModelIndex;
 } crop_t;
 
+typedef struct {
+	int type;
+	const char* name;
+	const char* model;
+	float initial_grow_time;
+	float growth_interval;
+} crop_attributes_t;
 
-//JL note: THIS BREAKS THE GAME IF THE ARRAY IS MISNAMED, apparently there's already a crops[] array defined somewhere
-// Array of crop types
-crop_t croptypes[]; /* = {
-	{"wheat", WHEAT_MODEL, 3, -1}  // Assuming 3 growth stages; final model index to be set later
-}; */
-
+extern crop_attributes_t crop_attributes[];
 
 void SP_trigger_field(edict_t* self);
 void CropThink(edict_t* self);
+void FieldThink(edict_t* self);
+
+//END CROP STUFF JL; START SHOPKEEPER STUFF
+
+typedef struct {
+	const char* name;
+	int seed_price;
+	int tool_price;
+} shopkeeper_t;
+
+extern shopkeeper_t shopkeeper;
+
+//END SHOPKEEPER STUFF
 
 struct edict_s
 {
@@ -1131,13 +1186,17 @@ struct edict_s
 	moveinfo_t		moveinfo;
 	monsterinfo_t	monsterinfo;
 
-	///JLnew crops
+	///JL FLAGS FOR CROPS AND PLANTING
 	crop_t* plantedcrop;
+
+	qboolean touching_field;
+	edict_t* touching_entity;
 };
 
 //this writes to a file the message
 //param msg this is the input to be written into the file
 // return
 // note this is file ops, use cautiously
+//added in class
 void file_log(const char* msg);
 
